@@ -309,7 +309,7 @@ Interpreter.prototype.appendCode = function(code) {
 Interpreter.prototype.step = function() {
   var stack = this.stateStack;
   do {
-    var state = stack[stack.length - 1];
+    var state = last(stack);
     if (!state) {
       return false;
     }
@@ -351,7 +351,7 @@ Interpreter.prototype.step = function() {
     do {
       // if (shouldSkip) console.log('Skipped: ' + n.type)
       var canContinue = step.call(this, ...args)
-      var state = this.stateStack[this.stateStack.length - 1]
+      var state = last(this.stateStack)
       var s = state
       var n = s.node
       var shouldSkip =
@@ -562,8 +562,7 @@ Interpreter.prototype.initFunction = function(globalObject) {
   };
 
   wrapper = function(thisArg, args) {
-    var state =
-        thisInterpreter.stateStack[thisInterpreter.stateStack.length - 1];
+    var state = last(thisInterpreter.stateStack);
     // Rewrite the current CallExpression state to apply a different function.
     state.func_ = this;
     // Assign the `this` object.
@@ -583,8 +582,7 @@ Interpreter.prototype.initFunction = function(globalObject) {
   this.setNativeFunctionPrototype(this.FUNCTION, 'apply', wrapper);
 
   wrapper = function(thisArg /*, var_args */) {
-    var state =
-        thisInterpreter.stateStack[thisInterpreter.stateStack.length - 1];
+    var state = last(thisInterpreter.stateStack);
     // Rewrite the current CallExpression state to call a different function.
     state.func_ = this;
     // Assign the `this` object.
@@ -2557,7 +2555,7 @@ Interpreter.prototype.setAsyncFunctionPrototype =
  * @return {!Interpreter.Scope} Current scope.
  */
 Interpreter.prototype.getScope = function() {
-  var scope = this.stateStack[this.stateStack.length - 1].scope;
+  var scope = last(this.stateStack).scope;
   if (!scope) {
     throw Error('No scope found.');
   }
@@ -2631,7 +2629,7 @@ Interpreter.prototype.getValueFromScope = function(name) {
     return this.getProperty(scope.object, name);
   }
   // Typeof operator is unique: it can safely look at non-defined variables.
-  var prevNode = this.stateStack[this.stateStack.length - 1].node;
+  var prevNode = last(this.stateStack).node;
   if (prevNode['type'] === 'UnaryExpression' &&
       prevNode['operator'] === 'typeof') {
     return undefined;
@@ -2710,7 +2708,7 @@ Interpreter.prototype.populateScope_ = function(node, scope) {
  * @return {boolean} True if 'new foo()', false if 'foo()'.
  */
 Interpreter.prototype.calledWithNew = function() {
-  return this.stateStack[this.stateStack.length - 1].isConstructor;
+  return last(this.stateStack).isConstructor;
 };
 
 /**
@@ -2784,7 +2782,7 @@ Interpreter.prototype.unwind = function(type, value, label) {
   }
 
   loop: for (var stack = this.stateStack; stack.length > 0; stack.pop()) {
-    var state = stack[stack.length - 1];
+    var state = last(stack);
     switch (state.node['type']) {
       case 'TryStatement':
         state.cv = {type: type, value: value, label: label};
@@ -2858,7 +2856,7 @@ Interpreter.prototype.createGetter_ = function(func, left) {
   var node = new this.nodeConstructor({options:{}});
   node['type'] = 'CallExpression';
   var state = new Interpreter.State(node,
-      this.stateStack[this.stateStack.length - 1].scope);
+      last(this.stateStack).scope);
   state.doneCallee_ = true;
   state.funcThis_ = funcThis;
   state.func_ = func;
@@ -2887,7 +2885,7 @@ Interpreter.prototype.createSetter_ = function(func, left, value) {
   var node = new this.nodeConstructor({options:{}});
   node['type'] = 'CallExpression';
   var state = new Interpreter.State(node,
-      this.stateStack[this.stateStack.length - 1].scope);
+      last(this.stateStack).scope);
   state.doneCallee_ = true;
   state.funcThis_ = funcThis;
   state.func_ = func;
@@ -3055,7 +3053,7 @@ Interpreter.prototype['stepArrayExpression'] = function(stack, state, node) {
     n++;
   }
   stack.pop();
-  stack[stack.length - 1].value = state.array_;
+  last(stack).value = state.array_;
 };
 
 Interpreter.prototype['stepAssignmentExpression'] =
@@ -3091,7 +3089,7 @@ Interpreter.prototype['stepAssignmentExpression'] =
     // Setter method on property has completed.
     // Ignore its return value, and use the original set value instead.
     stack.pop();
-    stack[stack.length - 1].value = state.setterValue_;
+    last(stack).value = state.setterValue_;
     return;
   }
   var value = state.leftValue_;
@@ -3120,7 +3118,7 @@ Interpreter.prototype['stepAssignmentExpression'] =
   }
   // Return if no setter function.
   stack.pop();
-  stack[stack.length - 1].value = value;
+  last(stack).value = value;
 };
 
 Interpreter.prototype['stepBinaryExpression'] = function(stack, state, node) {
@@ -3175,7 +3173,7 @@ Interpreter.prototype['stepBinaryExpression'] = function(stack, state, node) {
     default:
       throw SyntaxError('Unknown binary operator: ' + node['operator']);
   }
-  stack[stack.length - 1].value = value;
+  last(stack).value = value;
 };
 
 Interpreter.prototype['stepBlockStatement'] = function(stack, state, node) {
@@ -3349,11 +3347,11 @@ Interpreter.prototype['stepCallExpression'] = function(stack, state, node) {
     stack.pop();
     if (state.isConstructor && typeof state.value !== 'object') {
       // Normal case for a constructor is to use the `this` value.
-      stack[stack.length - 1].value = state.funcThis_;
+      last(stack).value = state.funcThis_;
     } else {
       // Non-constructors or constructions explicitly returning objects use
       // the return value.
-      stack[stack.length - 1].value = state.value;
+      last(stack).value = state.value;
     }
   }
 };
@@ -3394,7 +3392,7 @@ Interpreter.prototype['stepConditionalExpression'] =
   }
   stack.pop();
   if (node['type'] === 'ConditionalExpression') {
-    stack[stack.length - 1].value = state.value;
+    last(stack).value = state.value;
   }
 };
 
@@ -3439,7 +3437,7 @@ Interpreter.prototype['stepEvalProgram_'] = function(stack, state, node) {
     return new Interpreter.State(expression, state.scope);
   }
   stack.pop();
-  stack[stack.length - 1].value = this.value;
+  last(stack).value = this.value;
 };
 
 Interpreter.prototype['stepExpressionStatement'] = function(stack, state, node) {
@@ -3612,13 +3610,13 @@ Interpreter.prototype['stepFunctionDeclaration'] =
 
 Interpreter.prototype['stepFunctionExpression'] = function(stack, state, node) {
   stack.pop();
-  stack[stack.length - 1].value = this.createFunction(node, state.scope);
+  last(stack).value = this.createFunction(node, state.scope);
 };
 
 Interpreter.prototype['stepIdentifier'] = function(stack, state, node) {
   stack.pop();
   if (state.components) {
-    stack[stack.length - 1].value = [Interpreter.SCOPE_REFERENCE, node['name']];
+    last(stack).value = [Interpreter.SCOPE_REFERENCE, node['name']];
     return;
   }
   var value = this.getValueFromScope(node['name']);
@@ -3632,7 +3630,7 @@ Interpreter.prototype['stepIdentifier'] = function(stack, state, node) {
     var func = /** @type {!Interpreter.Object} */ (value);
     return this.createGetter_(func, this.globalObject);
   }
-  stack[stack.length - 1].value = value;
+  last(stack).value = value;
 };
 
 Interpreter.prototype['stepIfStatement'] =
@@ -3657,7 +3655,7 @@ Interpreter.prototype['stepLiteral'] = function(stack, state, node) {
     this.populateRegExp(pseudoRegexp, value);
     value = pseudoRegexp;
   }
-  stack[stack.length - 1].value = value;
+  last(stack).value = value;
 };
 
 Interpreter.prototype['stepLogicalExpression'] = function(stack, state, node) {
@@ -3673,14 +3671,14 @@ Interpreter.prototype['stepLogicalExpression'] = function(stack, state, node) {
         (node['operator'] === '||' && state.value)) {
       // Shortcut evaluation.
       stack.pop();
-      stack[stack.length - 1].value = state.value;
+      last(stack).value = state.value;
     } else {
       state.doneRight_ = true;
       return new Interpreter.State(node['right'], state.scope);
     }
   } else {
     stack.pop();
-    stack[stack.length - 1].value = state.value;
+    last(stack).value = state.value;
   }
 };
 
@@ -3704,7 +3702,7 @@ Interpreter.prototype['stepMemberExpression'] = function(stack, state, node) {
   }
   stack.pop();
   if (state.components) {
-    stack[stack.length - 1].value = [state.object_, propName];
+    last(stack).value = [state.object_, propName];
   } else {
     var value = this.getProperty(state.object_, propName);
     if (this.getterStep_) {
@@ -3712,7 +3710,7 @@ Interpreter.prototype['stepMemberExpression'] = function(stack, state, node) {
       var func = /** @type {!Interpreter.Object} */ (value);
       return this.createGetter_(func, state.object_);
     }
-    stack[stack.length - 1].value = value;
+    last(stack).value = value;
   }
 };
 
@@ -3766,7 +3764,7 @@ Interpreter.prototype['stepObjectExpression'] = function(stack, state, node) {
     }
   }
   stack.pop();
-  stack[stack.length - 1].value = state.object_;
+  last(stack).value = state.object_;
 };
 
 Interpreter.prototype['stepProgram'] = function(stack, state, node) {
@@ -3796,7 +3794,7 @@ Interpreter.prototype['stepSequenceExpression'] = function(stack, state, node) {
     return new Interpreter.State(expression, state.scope);
   }
   stack.pop();
-  stack[stack.length - 1].value = state.value;
+  last(stack).value = state.value;
 };
 
 Interpreter.prototype['stepSwitchStatement'] = function(stack, state, node) {
@@ -3855,7 +3853,7 @@ Interpreter.prototype['stepSwitchStatement'] = function(stack, state, node) {
 
 Interpreter.prototype['stepThisExpression'] = function(stack, state, node) {
   stack.pop();
-  stack[stack.length - 1].value = this.getValueFromScope('this');
+  last(stack).value = this.getValueFromScope('this');
 };
 
 Interpreter.prototype['stepThrowStatement'] = function(stack, state, node) {
@@ -3939,7 +3937,7 @@ Interpreter.prototype['stepUnaryExpression'] = function(stack, state, node) {
   } else {
     throw SyntaxError('Unknown unary operator: ' + node['operator']);
   }
-  stack[stack.length - 1].value = value;
+  last(stack).value = value;
 };
 
 Interpreter.prototype['stepUpdateExpression'] = function(stack, state, node) {
@@ -3970,7 +3968,7 @@ Interpreter.prototype['stepUpdateExpression'] = function(stack, state, node) {
     // Setter method on property has completed.
     // Ignore its return value, and use the original set value instead.
     stack.pop();
-    stack[stack.length - 1].value = state.setterValue_;
+    last(stack).value = state.setterValue_;
     return;
   }
   var leftValue = Number(state.leftValue_);
@@ -3991,7 +3989,7 @@ Interpreter.prototype['stepUpdateExpression'] = function(stack, state, node) {
   }
   // Return if no setter function.
   stack.pop();
-  stack[stack.length - 1].value = returnValue;
+  last(stack).value = returnValue;
 };
 
 Interpreter.prototype['stepVariableDeclaration'] = function(stack, state, node) {
@@ -4053,4 +4051,8 @@ Interpreter.prototype['getProperty'] = Interpreter.prototype.getProperty;
 Interpreter.prototype['setProperty'] = Interpreter.prototype.setProperty;
 Interpreter.prototype['nativeToPseudo'] = Interpreter.prototype.nativeToPseudo;
 Interpreter.prototype['pseudoToNative'] = Interpreter.prototype.pseudoToNative;
+
+function last(arr) {
+  return arr[arr.length - 1]
+}
 })()
