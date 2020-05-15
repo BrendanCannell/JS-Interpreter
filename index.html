@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8">
   <title>JS-Interpreter Demo</title>
+
   <link href="demos/style.css" rel="stylesheet" type="text/css">
 
   <script>
@@ -26,19 +27,17 @@
     }
 
     function parseButton() {
-      var code = document.getElementById('code').value;
-      myInterpreter = new Interpreter(code, initAlert);
+      myInterpreter = new Interpreter(editor.session.getValue(), initAlert);
       disable('');
       selectActiveNode()
     }
 
     function selectActiveNode() {
+      clearSelections()
       let stack = myInterpreter.stateStack;
       if (stack.length) {
         let node = stack[stack.length - 1].node;
         createSelection(node.start, node.end);
-      } else {
-        createSelection(0, 0);
       }
     }
 
@@ -65,29 +64,11 @@
       document.getElementById('stepButton').disabled = disabled;
       document.getElementById('runButton').disabled = disabled;
     }
-
-    function createSelection(start, end) {
-      var field = document.getElementById('code');
-      if (field.createTextRange) {
-        var selRange = field.createTextRange();
-        selRange.collapse(true);
-        selRange.moveStart('character', start);
-        selRange.moveEnd('character', end);
-        selRange.select();
-      } else if (field.setSelectionRange) {
-        field.setSelectionRange(start, end);
-      } else if (field.selectionStart) {
-        field.selectionStart = start;
-        field.selectionEnd = end;
-      }
-      field.focus();
-    }
   </script>
 </head>
 
 <body>
-  <p>
-    <textarea id="code">var result = fibonacci(16)
+    <div id="code">var result = fibonacci(2)
 
 function fibonacci(n) {
   var fibs = []
@@ -102,12 +83,85 @@ function fibonacci(n) {
   return fibs
 }
 
-alert(result.join(', '));</textarea>
+alert(result.join(', '));</div>
+    <!-- <pre><code id="code" contenteditable></code></pre> -->
     <br>
     <button onclick="parseButton()">Parse</button>
     <button onclick="stepButton()" id="stepButton" disabled="disabled">Step</button>
     <button onclick="runButton()" id="runButton" disabled="disabled">Run</button>
-  </p>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.11/ace.min.js" integrity="sha256-qCCcAHv/Z0u7K344shsZKUF2NR+59ooA3XWRj0LPGIQ=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.11/theme-monokai.min.js" integrity="sha256-QjbDa92d4Q3oBUXnKXRhOrz8eONu3odsIlDHnNwg4y4=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.11/mode-javascript.min.js" integrity="sha256-cN39Ofb0/L/HOBScgDuoNefcVF4+MKdAsxXR3g/xyZw=" crossorigin="anonymous"></script>
+  <script>
+
+ace.config.set(
+  "basePath",
+  "https://cdn.jsdelivr.net/npm/ace-builds@1.4.8/src-noconflict/"
+);
+ace.config.setModuleUrl(
+   "ace/mode/javascript_worker",
+   "https://cdn.jsdelivr.net/npm/ace-builds@1.4.8/src-noconflict/worker-javascript.js"
+);
+
+var Range = ace.require("ace/range").Range
+
+let editor = ace.edit("code");
+editor.setTheme("ace/theme/monokai");
+editor.session.setMode("ace/mode/javascript");
+editor.setHighlightActiveLine(false);
+editor.setHighlightGutterLine(false);
+
+editor.setValue(`
+var result = fibonacci(16)
+
+function fibonacci(n) {
+  var fibs = []
+  var a = 1
+  var b = 1
+  for (var i = 0; i < n; i++) {
+    fibs.push(a)
+    var sum = a + b
+    a = b
+    b = sum
+  }
+  return fibs
+}
+
+alert(result.join(', '));`)
+
+let selections = []
+
+function createSelection(start, end) {
+  let text = editor.session.getValue()
+  let marker = editor.session.addMarker(
+    new Range(
+      ...getPosition(text, start),
+      ...getPosition(text, end)
+    ),
+    'highlight',
+    'text',
+    false
+  )
+  selections.push(marker)
+}
+
+function clearSelections() {
+  for (let s of selections)
+    editor.session.removeMarker(s)
+}
+
+function getPosition(str, i) {
+  let line = 0;
+  let lineIndex = 0;
+  for (var j = 0; j < i; j++)
+    if (str[j] === '\n') {
+      line++
+      lineIndex = j
+    }
+  let column = i - lineIndex
+  return [line, column - 1]
+}
+  </script>
 
 </body>
 
