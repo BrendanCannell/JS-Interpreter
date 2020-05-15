@@ -343,6 +343,38 @@ Interpreter.prototype.step = function() {
   return true;
 };
 
+// Wrap `Interpreter.prototype.step` to skip trivial intermediate steps
+(() => {
+  let step = Interpreter.prototype.step
+  Interpreter.prototype.step = function (...args) {
+    do {
+      // if (shouldSkip) console.log('Skipped: ' + n.type)
+      var canContinue = step.call(this, ...args)
+      var state = this.stateStack[this.stateStack.length - 1]
+      var s = state
+      var n = s.node
+      var shouldSkip =
+        // Skip...
+        // ...expression statement wrappers
+           n.type === 'ExpressionStatement'
+        // ...function declarations
+        || n.type === 'FunctionDeclaration'
+        // ...intermediate visits to...
+        // ...the top level
+        || n.type === 'Program' && (0 !== n.body.length)
+        // ...blocks
+        || n.type === 'BlockStatement' && s.n_ && (s.n_ < n.body.length)
+        // ...variable declarations
+        || n.type === 'VariableDeclaration' && ('n_' in s) && (s.n_ < n.declarations.length - 1)
+        // ...various binary operations
+        || s.doneLeft_ && !s.doneRight_
+        // ...function call expressions
+        || n.type === 'CallExpression' && s.doneCallee_ && ((s.n_ || 0) < n.arguments.length)
+    } while (canContinue && shouldSkip)
+    return canContinue
+  }
+})()
+
 /**
  * Execute the interpreter to program completion.  Vulnerable to infinite loops.
  * @return {boolean} True if a execution is asynchronously blocked,
