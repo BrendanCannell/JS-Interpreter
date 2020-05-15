@@ -1,3 +1,4 @@
+(() =>{
 /**
  * @license
  * Copyright 2013 Google LLC
@@ -4052,3 +4053,4 @@ Interpreter.prototype['getProperty'] = Interpreter.prototype.getProperty;
 Interpreter.prototype['setProperty'] = Interpreter.prototype.setProperty;
 Interpreter.prototype['nativeToPseudo'] = Interpreter.prototype.nativeToPseudo;
 Interpreter.prototype['pseudoToNative'] = Interpreter.prototype.pseudoToNative;
+})()
