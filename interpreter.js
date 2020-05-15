@@ -371,6 +371,10 @@ Interpreter.prototype.step = function() {
         || s.doneLeft_ && !s.doneRight_
         // ...function call expressions
         || n.type === 'CallExpression' && s.doneCallee_ && ((s.n_ || 0) < n.arguments.length)
+        // ...array literals
+        || n.type === 'ArrayExpression' && ('n_' in s) && (s.n_ < n.elements.length - 1)
+        // ...object literals
+        || n.type === 'ObjectExpression' && ('value' in s) && ((s.n_ || 0) < n.properties.length - 1)
     } while (canContinue && shouldSkip)
     return canContinue
   }

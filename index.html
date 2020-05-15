@@ -8,22 +8,13 @@
   <link href="demos/style.css" rel="stylesheet" type="text/css">
 
   <script>
-    // Depending on the URL argument, test the compressed or uncompressed version.
-    var compressed = (document.location.search == '?compressed');
-    if (compressed) {
-      document.write('<scr' + 'ipt src="acorn_interpreter.js"></scr' + 'ipt>');
-    } else {
-      document.write('<scr' + 'ipt src="acorn.js"></scr' + 'ipt>');
-      document.write('<scr' + 'ipt src="interpreter.js"></scr' + 'ipt>');
-    }
+    document.write('<scr' + 'ipt src="acorn.js"></scr' + 'ipt>');
+    document.write('<scr' + 'ipt src="interpreter.js"></scr' + 'ipt>');
 
     var myInterpreter;
     function initAlert(interpreter, scope) {
-      var wrapper = function (text) {
-        return alert(arguments.length ? text : '');
-      };
-      interpreter.setProperty(scope, 'alert',
-        interpreter.createNativeFunction(wrapper));
+      interpreter.setProperty(scope, 'log',
+        interpreter.createNativeFunction(console.log));
     }
 
     function parseButton() {
@@ -105,7 +96,7 @@ ace.config.setModuleUrl(
 
 var Range = ace.require("ace/range").Range
 
-let editor = ace.edit("code");
+let editor = ace.edit("code", {useWorker: false});
 editor.setTheme("ace/theme/monokai");
 editor.session.setMode("ace/mode/javascript");
 editor.setHighlightActiveLine(false);
