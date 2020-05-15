@@ -375,6 +375,8 @@ Interpreter.prototype.step = function() {
         || n.type === 'ArrayExpression' && ('n_' in s) && (s.n_ < n.elements.length - 1)
         // ...object literals
         || n.type === 'ObjectExpression' && ('value' in s) && ((s.n_ || 0) < n.properties.length - 1)
+        // ...for loops
+        || n.type === 'ForStatement' && ('mode_' in s) && !(s.mode_ === 2 && !s.value)
     } while (canContinue && shouldSkip)
     return canContinue
   }
