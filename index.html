@@ -59,22 +59,8 @@
 </head>
 
 <body>
-    <div id="code">var result = fibonacci(2)
-
-function fibonacci(n) {
-  var fibs = []
-  var a = 1
-  var b = 1
-  for (var i = 0; i < n; i++) {
-    fibs.push(a)
-    var sum = a + b
-    a = b
-    b = sum
-  }
-  return fibs
-}
-
-alert(result.join(', '));</div>
+    <div id="code">
+</div>
     <!-- <pre><code id="code" contenteditable></code></pre> -->
     <br>
     <button onclick="parseButton()">Parse</button>
@@ -103,22 +89,7 @@ editor.setHighlightActiveLine(false);
 editor.setHighlightGutterLine(false);
 
 editor.setValue(`
-var result = fibonacci(16)
-
-function fibonacci(n) {
-  var fibs = []
-  var a = 1
-  var b = 1
-  for (var i = 0; i < n; i++) {
-    fibs.push(a)
-    var sum = a + b
-    a = b
-    b = sum
-  }
-  return fibs
-}
-
-alert(result.join(', '));`)
+`)
 
 let selections = []
 
